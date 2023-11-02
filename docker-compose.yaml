@@ -1,6 +1,80 @@
-version: '3'
+version: '3.9'
+
 services:
+  mongodb:
+    container_name: mongodb
+    image: mongo
+    ports:
+      - "27017:27017"
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: username
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: app3
+    networks:
+      - backend
+    volumes:
+      - mongo-data:/data/db
+
+  mysql:
+    container_name: mysql
+    image: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: example
+      MYSQL_DATABASE: memberyo
+      MYSQL_USER: memberyo
+      MYSQL_PASSWORD: 123456
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - mysql-init:/docker-entrypoint-initdb.d
+    networks:
+      - backend
+
   redis:
-    image: redis:latest
+    container_name: redis
+    image: bitnami/redis:6.2.6-debian-10-r53
     ports:
       - "6379:6379"
+    environment:
+      REDIS_PASSWORD: password
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+
+  localstack:
+    container_name: localstack
+    image: localstack/localstack:latest
+    ports:
+      - "4566:4566"
+      - "4571:4571"
+    environment:
+      DEFAULT_REGION: ap-northeast-2
+      SERVICES: sns,sqs
+      AWS_ACCESS_KEY_ID: access-key
+      AWS_SECRET_ACCESS_KEY: secret-key
+    healthcheck:
+      test: ["CMD", "awslocal", "sns", "list-topics"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend
+    volumes:
+      - localstack-data:/tmp/localstack
+
+networks:
+  backend:
+    driver: bridge
+
+volumes:
+  mongo-data:
+  mysql-data:
+  mysql-init:
+  localstack-data:
