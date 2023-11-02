@@ -24,6 +24,7 @@ async def fetch(session, url, redis):
     async with session.get(url) as response:
         response_text = await response.text()
         await redis.set(cache_key, response_text)
+        await redis.expire(cache_key, 10)
         return response_text
 
 
